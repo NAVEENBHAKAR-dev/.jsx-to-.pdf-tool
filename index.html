@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSX → PDF Tool</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f4f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+
+    label.section-label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .section { margin-bottom: 1.5rem; }
+
+    #drop-zone {
+      border: 1.5px dashed #bbb;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      background: #fafaf8;
+      transition: border-color 0.2s;
+    }
+    #drop-zone:hover { border-color: #888; }
+    #drop-zone.active { border-color: #3b7dd8; background: #eef4ff; }
+    #drop-zone .dz-title { font-size: 13px; color: #555; }
+    #drop-zone .dz-sub { font-size: 12px; color: #999; margin-top: 4px; }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 0.5px solid #ccc;
+      background: #fff;
+      color: #1a1a1a;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus { border-color: #3b7dd8; }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .style-option {
+      border: 0.5px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .style-option.selected {
+      border-color: #3b7dd8;
+    }
+    .style-option input { display: none; }
+    .style-option .opt-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+    .style-option.selected .opt-title { color: #3b7dd8; }
+    .style-option .opt-sub {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    #file-info {
+      display: none;
+      background: #f0f0ec;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #555;
+      margin-top: 8px;
+    }
+
+    .or-divider {
+      text-align: center;
+      font-size: 12px;
+      color: #aaa;
+      margin: 8px 0;
+    }
+
+    button#generate-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button#generate-btn:hover { background: #333; }
+    button#generate-btn:disabled { background: #999; cursor: not-allowed; }
+
+    #status {
+      display: none;
+      margin-top: 1rem;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    #status.info { background: #eef4ff; color: #1a4fa0; }
+    #status.success { background: #edfaf2; color: #1a6e3d; }
+    #status.error { background: #fef0f0; color: #a01a1a; }
+
+    #result-box {
+      display: none;
+      margin-top: 1rem;
+      background: #fff;
+      border: 0.5px solid #ddd;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+    #result-box .res-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    #result-box .res-stats { font-size: 12px; color: #888; margin-bottom: 12px; }
+
+    button#download-btn {
+      padding: 8px 20px;
+      font-size: 13px;
+      border-radius: 8px;
+      background: #fff;
+      border: 0.5px solid #ccc;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    button#download-btn:hover { background: #f5f5f5; }
+
+    @media (max-width: 500px) {
+      .style-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>JSX → PDF Tool</h1>
+  <p class="subtitle">JSX file upload karo, Claude data extract karega, PDF ban jaayegi</p>
+
+  <!-- Step 1: File -->
+  <div class="section">
+    <label class="section-label">Step 1 — JSX file upload karo ya paste karo</label>
+
+    <div id="drop-zone">
+      <div class="dz-title">JSX file yahan drop karo ya click karke choose karo</div>
+      <div class="dz-sub">.jsx / .js / .txt supported</div>
+      <input type="file" id="file-input" accept=".jsx,.js,.txt" style="display:none;">
+    </div>
+
+    <div id="file-info"></div>
+
+    <div class="or-divider">ya</div>
+
+    <textarea id="jsx-input" placeholder="Yahan JSX code paste karo..."></textarea>
+  </div>
+
+  <!-- Step 2: Style -->
+  <div class="section">
+    <label class="section-label">Step 2 — PDF style choose karo</label>
+    <div class="style-grid">
+      <label class="style-option selected" id="lbl-exam">
+        <input type="radio" name="pdf-style" value="exam" checked>
+        <div class="opt-title">Exam Paper</div>
+        <div class="opt-sub">Serif font, clean layout</div>
+      </label>
+      <label class="style-option" id="lbl-notes">
+        <input type="radio" name="pdf-style" value="notes">
+        <div class="opt-title">Study Notes</div>
+        <div class="opt-sub">Compact, mono headers</div>
+      </label>
+      <label class="style-option" id="lbl-ref">
+        <input type="radio" name="pdf-style" value="ref">
+        <div class="opt-title">Quick Reference</div>
+        <div class="opt-sub">Tables, minimal text</div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <button id="generate-btn" onclick="generatePDF()">PDF Generate Karo</button>
+
+  <div id="status"></div>
+
+  <div id="result-box">
+    <div class="res-title">PDF taiyar hai!</div>
+    <div class="res-stats" id="pdf-stats"></div>
+    <button id="download-btn">Download PDF</button>
+  </div>
+
+</div>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  let jsxContent = '';
+  let pdfBlob = null;
+
+  /* ── File handling ── */
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('active');
+    if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) readFile(e.target.files[0]); });
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      jsxContent = e.target.result;
+      document.getElementById('jsx-input').value = jsxContent.substring(0, 500) + (jsxContent.length > 500 ? '\n...' : '');
+      const info = document.getElementById('file-info');
+      info.style.display = 'block';
+      info.textContent = `📄 ${file.name}  (${(file.size/1024).toFixed(1)} KB)`;
+    };
+    reader.readAsText(file);
+  }
+
+  /* ── Style selection ── */
+  document.querySelectorAll('input[name="pdf-style"]').forEach(r => {
+    r.addEventListener('change', function() {
+      document.querySelectorAll('.style-option').forEach(l => l.classList.remove('selected'));
+      this.closest('.style-option').classList.add('selected');
+    });
+  });
+
+  /* ── Status ── */
+  function showStatus(msg, type) {
+    const s = document.getElementById('status');
+    s.style.display = 'block';
+    s.className = type;
+    s.textContent = msg;
+  }
+
+  /* ── Main generate ── */
+  async function generatePDF() {
+    const content = document.getElementById('jsx-input').value.trim() || jsxContent.trim();
+    if (!content) { showStatus('Pehle JSX file upload karo ya content paste karo!', 'error'); return; }
+
+    const style = document.querySelector('input[name="pdf-style"]:checked').value;
+    const btn = document.getElementById('generate-btn');
+    btn.textContent = 'Processing...';
+    btn.disabled = true;
+    document.getElementById('result-box').style.display = 'none';
+    showStatus('Claude se data extract ho raha hai...', 'info');
+
+    try {
+      const systemPrompt = `You are a data extractor. Given JSX React code that contains educational content (reactions, topics, notes, etc.), extract ALL the data as clean JSON.
+
+Return ONLY valid JSON in this exact format:
+{
+  "title": "main title string",
+  "subtitle": "subtitle or description",
+  "sections": [
+    {
+      "heading": "section name",
+      "items": [
+        {
+          "name": "item name",
+          "type": "type/category label",
+          "fields": [
+            {"label": "Reagents", "value": "..."},
+            {"label": "Conditions", "value": "..."},
+            {"label": "Product", "value": "..."}
+          ],
+          "steps": [
+            {"step": "Step name", "desc": "description"}
+          ],
+          "notes": "key notes text",
+          "example": "example text"
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Extract ALL sections and ALL items - do not skip any
+- Keep all Unicode characters as-is (arrows, Greek letters, subscripts, superscripts, etc.)
+- If a field doesn't exist, omit it (don't set to null)
+- Return ONLY the JSON, no markdown, no explanation`;
+
+      const resp = await fetch("/api/claude", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 8000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: `Extract data from this JSX:\n\n${content.substring(0, 15000)}` }]
+        })
+      });
+
+      const data = await resp.json();
+      const rawText = data.content?.find(b => b.type === 'text')?.text || '';
+
+      let parsed;
+      try {
+        const clean = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        parsed = JSON.parse(clean);
+      } catch(e) {
+        throw new Error('Data extract nahi hua. Dobara try karo.');
+      }
+
+      showStatus('PDF ban raha hai...', 'info');
+      await buildPDF(parsed, style);
+
+    } catch(err) {
+      showStatus('Error: ' + err.message, 'error');
+    } finally {
+      btn.textContent = 'PDF Generate Karo';
+      btn.disabled = false;
+    }
+  }
+
+  /* ── PDF builder ── */
+  async function buildPDF(data, style) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const PW = 210, PH = 297;
+    const ML = 18, MR = 18, MT = 18, MB = 15;
+    const CW = PW - ML - MR;
+    let y = MT;
+    let pageNum = 1;
+    let totalItems = 0;
+
+    const bodyFont  = style === 'exam' ? 'times'     : 'helvetica';
+    const titleFont = style === 'exam' ? 'times'     : 'helvetica';
+    const monoFont  = 'courier';
+
+    function addFooter() {
+      doc.setFontSize(8);
+      doc.setFont(bodyFont, 'normal');
+      doc.setTextColor(150);
+      doc.text(`Page ${pageNum}`, PW / 2, PH - 8, { align: 'center' });
+      doc.setTextColor(0);
+    }
+
+    function newPage() {
+      addFooter();
+      doc.addPage();
+      pageNum++;
+      y = MT;
+    }
+
+    function checkY(needed) {
+      if (y + needed > PH - MB - 10) newPage();
+    }
+
+    addFooter();
+
+    /* Cover */
+    doc.setFontSize(16);
+    doc.setFont(titleFont, 'bold');
+    doc.setTextColor(0);
+    const titleLines = doc.splitTextToSize(data.title || 'Document', CW);
+    doc.text(titleLines, ML, y);
+    y += titleLines.length * 7 + 2;
+
+    if (data.subtitle) {
+      doc.setFontSize(10);
+      doc.setFont(bodyFont, 'normal');
+      doc.setTextColor(80);
+      const subLines = doc.splitTextToSize(data.subtitle, CW);
+      doc.text(subLines, ML, y);
+      y += subLines.length * 5 + 2;
+    }
+
+    doc.setTextColor(0);
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(ML, y, PW - MR, y);
+    y += 7;
+
+    /* Sections */
+    for (const section of (data.sections || [])) {
+      checkY(18);
+
+      doc.setFontSize(12);
+      doc.setFont(titleFont, 'bold');
+      doc.setTextColor(0);
+      doc.text(('\u25a0  ' + (section.heading || '')).toUpperCase(), ML, y);
+      y += 5;
+      doc.setLineWidth(0.4);
+      doc.setDrawColor(0);
+      doc.line(ML, y, PW - MR, y);
+      y += 5;
+
+      for (const item of (section.items || [])) {
+        totalItems++;
+        checkY(20);
+
+        /* Name + type */
+        doc.setFontSize(11);
+        doc.setFont(titleFont, 'bold');
+        doc.setTextColor(0);
+        const nameLines = doc.splitTextToSize(`${totalItems}. ${item.name}`, CW - 35);
+        doc.text(nameLines, ML, y);
+        if (item.type) {
+          doc.setFontSize(8);
+          doc.setFont(bodyFont, 'normal');
+          doc.setTextColor(100);
+          doc.text(`[${item.type}]`, PW - MR, y, { align: 'right' });
+        }
+        y += nameLines.length * 5 + 2;
+
+        /* Fields 2-column */
+        if (item.fields && item.fields.length > 0) {
+          const colW = CW / 2 - 4;
+          let col = 0, rowStartY = y, maxH = 0;
+          for (const f of item.fields) {
+            checkY(6);
+            const fx = col === 0 ? ML : ML + CW / 2 + 2;
+            doc.setFontSize(9);
+            doc.setFont(bodyFont, 'normal');
+            doc.setTextColor(0);
+            const txt = doc.splitTextToSize(`${f.label}: ${f.value}`, colW);
+            doc.text(txt, fx, rowStartY);
+            const h = txt.length * 3.8;
+            if (h > maxH) maxH = h;
+            col++;
+            if (col === 2) { col = 0; rowStartY += maxH + 1; maxH = 0; }
+          }
+          if (col !== 0) rowStartY += maxH + 1;
+          y = rowStartY + 2;
+        }
+
+        /* Mechanism */
+        if (item.steps && item.steps.length > 0) {
+          checkY(8);
+          doc.setFontSize(8.5);
+          doc.setFont(bodyFont, 'bold');
+          doc.setTextColor(0);
+          doc.text('Mechanism:', ML, y);
+          y += 4;
+          doc.setDrawColor(120);
+          doc.setLineWidth(0.25);
+          for (const s of item.steps) {
+            checkY(7);
+            doc.line(ML + 3, y - 1, ML + 3, y + 2.5);
+            doc.setFontSize(8.5);
+            doc.setFont(bodyFont, 'normal');
+            doc.setTextColor(30);
+            const combined = doc.splitTextToSize(`${s.step}: ${s.desc}`, CW - 12);
+            doc.text(combined, ML + 7, y);
+            y += combined.length * 3.8 + 1.5;
+          }
+          doc.setTextColor(0);
+          y += 1;
+        }
+
+        /* Notes */
+        if (item.notes) {
+          checkY(7);
+          doc.setFontSize(8.5);
+          doc.setFont(bodyFont, 'normal');
+          doc.setTextColor(90, 60, 0);
+          const nl = doc.splitTextToSize('\u2605 ' + item.notes, CW - 4);
+          doc.text(nl, ML + 2, y);
+          y += nl.length * 3.8 + 2;
+          doc.setTextColor(0);
+        }
+
+        /* Example */
+        if (item.example) {
+          checkY(6);
+          doc.setFontSize(8);
+          doc.setFont(monoFont, 'normal');
+          doc.setTextColor(70);
+          const el = doc.splitTextToSize('e.g.  ' + item.example, CW - 4);
+          doc.text(el, ML + 2, y);
+          y += el.length * 3.5 + 2;
+          doc.setTextColor(0);
+        }
+
+        /* Divider */
+        doc.setDrawColor(200);
+        doc.setLineWidth(0.2);
+        doc.line(ML, y, PW - MR, y);
+        y += 5;
+      }
+      y += 3;
+    }
+
+    addFooter();
+
+    pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const filename = (data.title || 'document').replace(/\s+/g, '_') + '.pdf';
+
+    document.getElementById('result-box').style.display = 'block';
+    document.getElementById('pdf-stats').textContent =
+      `${totalItems} items extracted · ${pageNum} pages · ${(pdfBlob.size / 1024).toFixed(0)} KB`;
+    showStatus('PDF taiyar hai!', 'success');
+
+    document.getElementById('download-btn').onclick = () => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+    };
+  }
+</script>
+</body>
+</html>
