@@ -174,14 +174,14 @@
 <div class="container">
 
   <h1>JSX → PDF Tool</h1>
-  <p class="subtitle">JSX file upload karo, Claude data extract karega, PDF ban jaayegi</p>
+  <p class="subtitle">please upload your JSX file, Naveen Bhakar will extract your data,you will get PDF</p>
 
   <!-- Step 1: File -->
   <div class="section">
-    <label class="section-label">Step 1 — JSX file upload karo ya paste karo</label>
+    <label class="section-label">Step 1 — Upload your JSX file or paste</label>
 
     <div id="drop-zone">
-      <div class="dz-title">JSX file yahan drop karo ya click karke choose karo</div>
+      <div class="dz-title">Drop your JSX file here or click to choose file</div>
       <div class="dz-sub">.jsx / .js / .txt supported</div>
       <input type="file" id="file-input" accept=".jsx,.js,.txt" style="display:none;">
     </div>
@@ -190,12 +190,12 @@
 
     <div class="or-divider">ya</div>
 
-    <textarea id="jsx-input" placeholder="Yahan JSX code paste karo..."></textarea>
+    <textarea id="jsx-input" placeholder="Paste your JSX code here..."></textarea>
   </div>
 
   <!-- Step 2: Style -->
   <div class="section">
-    <label class="section-label">Step 2 — PDF style choose karo</label>
+    <label class="section-label">Step 2 — Choose PDF style whatever you want </label>
     <div class="style-grid">
       <label class="style-option selected" id="lbl-exam">
         <input type="radio" name="pdf-style" value="exam" checked>
@@ -216,12 +216,12 @@
   </div>
 
   <!-- Generate -->
-  <button id="generate-btn" onclick="generatePDF()">PDF Generate Karo</button>
+  <button id="generate-btn" onclick="generatePDF()"> Generate PDF</button>
 
   <div id="status"></div>
 
   <div id="result-box">
-    <div class="res-title">PDF taiyar hai!</div>
+    <div class="res-title">your PDF is ready!</div>
     <div class="res-stats" id="pdf-stats"></div>
     <button id="download-btn">Download PDF</button>
   </div>
