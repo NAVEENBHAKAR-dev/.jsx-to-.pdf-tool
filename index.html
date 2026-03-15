@@ -195,7 +195,7 @@
 
   <!-- Step 2: Style -->
   <div class="section">
-    <label class="section-label">Step 2 — Choose PDF style whatever you want </label>
+    <label class="section-label">Step 2 — Choose PDF style whatever you want</label>
     <div class="style-grid">
       <label class="style-option selected" id="lbl-exam">
         <input type="radio" name="pdf-style" value="exam" checked>
@@ -216,12 +216,12 @@
   </div>
 
   <!-- Generate -->
-  <button id="generate-btn" onclick="generatePDF()"> Generate PDF</button>
+  <button id="generate-btn" onclick="generatePDF()"> Generate PDF </button>
 
   <div id="status"></div>
 
   <div id="result-box">
-    <div class="res-title">your PDF is ready!</div>
+    <div class="res-title">PDF taiyar hai!</div>
     <div class="res-stats" id="pdf-stats"></div>
     <button id="download-btn">Download PDF</button>
   </div>
@@ -229,7 +229,7 @@
 </div>
 
 <!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
   let jsxContent = '';
   let pdfBlob = null;
@@ -323,9 +323,9 @@ Rules:
 - If a field doesn't exist, omit it (don't set to null)
 - Return ONLY the JSON, no markdown, no explanation`;
 
-      const resp = await fetch("/api/claude", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 8000,
@@ -543,6 +543,11 @@ Rules:
       a.download = filename;
       a.click();
     };
+  }
+</script>
+</body>
+</html>
+
   }
 </script>
 </body>
